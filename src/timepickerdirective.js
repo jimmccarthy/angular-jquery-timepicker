@@ -31,12 +31,17 @@ angular.module('ui.timepicker', [])
         priority: 1,
         link: function(scope, element, attrs, ngModel) {
             'use strict';
+            // JMM - COnvert element to JQuery element
+            element = $(element);
             var config = angular.copy(uiTimepickerConfig);
             var asMoment = config.asMoment || false;
             delete config.asMoment;
 
             ngModel.$render = function () {
                 var date = ngModel.$modelValue;
+                if (typeof(date) == "string") {
+                    date = new Date(date);
+                }
                 if (angular.isDefined(date) && date !== null && date !== '' && !isDateOrMoment(date)) {
                     throw new Error('ng-Model value must be a Date or Moment object - currently it is a ' + typeof date + '.');
                 }
@@ -63,7 +68,7 @@ angular.module('ui.timepicker', [])
             );
 
             var userInput = function() {
-                return angular.element.trim(element.val());
+                return $.trim(element.val());
             };
 
             var invalidInput = function(){
@@ -95,6 +100,13 @@ angular.module('ui.timepicker', [])
                 ngModel.$validators.time = function(modelValue){
                     return (!attrs.required && !userInput()) ? true : isDateOrMoment(modelValue);
                 };
+                // JMM - Pick up selected times in thh dropdown
+                element.on('selectTime', function() {
+                    scope.$evalAsync(function() {
+                        var date = element.timepicker('getTime', asDate() );
+                        ngModel.$setViewValue(date);
+                    });
+                });
             } else {
                 element.on('changeTime', function() {
                     scope.$evalAsync(function() {
